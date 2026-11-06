@@ -31,11 +31,32 @@ public sealed class ProcessExecutor
 
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+
+        if (!process.WaitForExit(TimeSpan.FromSeconds(scenario.TimeoutSeconds)))
+        {
+            KillTree(process);
+            timer.Stop();
+            return new ProcessResult(timer.Elapsed.TotalMilliseconds, null, MeasurementStatus.Timeout);
+        }
+
         process.WaitForExit();
         timer.Stop();
 
         var status = process.ExitCode == 0 ? MeasurementStatus.Passed : MeasurementStatus.Failed;
         return new ProcessResult(timer.Elapsed.TotalMilliseconds, process.ExitCode, status);
+    }
+
+    private void KillTree(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+            process.WaitForExit(_killGrace);
+        }
+        catch (InvalidOperationException)
+        {
+            // already exited
+        }
     }
 
     private static ProcessStartInfo BuildStartInfo(Scenario scenario)
