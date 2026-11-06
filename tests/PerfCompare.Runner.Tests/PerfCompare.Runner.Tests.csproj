@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PerfCompare.Runner\PerfCompare.Runner.csproj" />
     <ProjectReference Include="..\..\src\PerfCompare.Contracts\PerfCompare.Contracts.csproj" />
+    <ProjectReference Include="..\PerfCompare.TestApp\PerfCompare.TestApp.csproj" />
   </ItemGroup>
 
 </Project>
