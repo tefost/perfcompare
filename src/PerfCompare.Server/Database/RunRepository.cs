@@ -50,6 +50,66 @@ public sealed class RunRepository
         }
     }
 
+    public IReadOnlyList<RunSummary> ListRuns()
+    {
+        const string sql = @"SELECT r.id, s.name, e.id, e.os, r.started_at,
+                (SELECT COUNT(*) FROM measurements m WHERE m.run_id = r.id)
+            FROM runs r
+            JOIN scenarios s ON s.id = r.scenario_id
+            JOIN environments e ON e.id = r.environment_id
+            ORDER BY r.id DESC;";
+
+        using var connection = _factory.Open();
+        using var command = CreateCommand(connection, null, sql);
+        using var reader = command.ExecuteReader();
+
+        var result = new List<RunSummary>();
+        while (reader.Read())
+        {
+            result.Add(new RunSummary(
+                reader.GetInt64(0),
+                reader.GetString(1),
+                reader.GetInt64(2),
+                reader.GetString(3),
+                ParseDate(reader.GetString(4)),
+                reader.GetInt32(5)));
+        }
+
+        return result;
+    }
+
+    public RunResult? GetRun(long id)
+    {
+        const string sql = @"SELECT s.name, r.command, r.repeats, r.timeout_seconds,
+                e.os, e.os_version, e.runtime, e.cores, e.ram_mb, r.started_at
+            FROM runs r
+            JOIN scenarios s ON s.id = r.scenario_id
+            JOIN environments e ON e.id = r.environment_id
+            WHERE r.id = $id;";
+
+        using var connection = _factory.Open();
+
+        ScenarioInfo scenario;
+        EnvironmentInfo environment;
+        DateTimeOffset startedAt;
+        using (var command = CreateCommand(connection, null, sql))
+        {
+            Add(command, "$id", id);
+            using var reader = command.ExecuteReader();
+            if (!reader.Read())
+            {
+                return null;
+            }
+
+            scenario = new ScenarioInfo(reader.GetString(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt32(3));
+            environment = new EnvironmentInfo(
+                reader.GetString(4), reader.GetString(5), reader.GetString(6), reader.GetInt32(7), reader.GetInt64(8));
+            startedAt = ParseDate(reader.GetString(9));
+        }
+
+        return new RunResult(scenario, environment, startedAt, ReadMeasurements(connection, id));
+    }
+
     private static long FindOrInsertEnvironment(SqliteConnection connection, SqliteTransaction? transaction, EnvironmentInfo environment)
     {
         const string select = "SELECT id FROM environments WHERE os = $os AND os_version = $osVersion AND runtime = $runtime AND cores = $cores AND ram_mb = $ramMb;";
@@ -112,6 +172,36 @@ public sealed class RunRepository
         Add(command, "$exitCode", measurement.ExitCode);
         Add(command, "$status", measurement.Status.ToString());
         command.ExecuteNonQuery();
+    }
+
+    private static List<Measurement> ReadMeasurements(SqliteConnection connection, long runId)
+    {
+        const string sql = "SELECT iteration, duration_ms, peak_mem_mb, cpu_time_ms, exit_code, status FROM measurements WHERE run_id = $runId ORDER BY iteration;";
+        using var command = CreateCommand(connection, null, sql);
+        Add(command, "$runId", runId);
+        using var reader = command.ExecuteReader();
+
+        var result = new List<Measurement>();
+        while (reader.Read())
+        {
+            result.Add(new Measurement(
+                reader.GetInt32(0),
+                reader.GetDouble(1),
+                reader.IsDBNull(2) ? null : reader.GetDouble(2),
+                reader.IsDBNull(3) ? null : reader.GetDouble(3),
+                reader.IsDBNull(4) ? null : reader.GetInt32(4),
+                Enum.Parse<MeasurementStatus>(reader.GetString(5))));
+        }
+
+        return result;
+    }
+
+    private static DateTimeOffset ParseDate(string value)
+    {
+        return DateTimeOffset.Parse(
+            value,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
     }
 
     private static void AddEnvironmentParameters(SqliteCommand command, EnvironmentInfo environment)
