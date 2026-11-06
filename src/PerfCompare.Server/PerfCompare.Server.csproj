@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\PerfCompare.Contracts\PerfCompare.Contracts.csproj" />
@@ -14,4 +14,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Database\schema.sql" LogicalName="schema.sql" />
+  </ItemGroup>
 </Project>
+
