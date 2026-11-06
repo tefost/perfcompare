@@ -43,3 +43,7 @@ CREATE TABLE IF NOT EXISTS baselines (
     created_at TEXT NOT NULL,
     UNIQUE (scenario_id, environment_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_runs_scenario ON runs (scenario_id);
+CREATE INDEX IF NOT EXISTS idx_runs_environment ON runs (environment_id);
+CREATE INDEX IF NOT EXISTS idx_measurements_run ON measurements (run_id);
