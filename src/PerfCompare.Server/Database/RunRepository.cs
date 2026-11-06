@@ -25,6 +25,31 @@ public sealed class RunRepository
         return FindOrInsertScenario(connection, null, name);
     }
 
+    public long SaveRun(RunResult run)
+    {
+        using var connection = _factory.Open();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            var environmentId = FindOrInsertEnvironment(connection, transaction, run.Environment);
+            var scenarioId = FindOrInsertScenario(connection, transaction, run.Scenario.Name);
+            var runId = InsertRun(connection, transaction, scenarioId, environmentId, run);
+
+            foreach (var measurement in run.Measurements)
+            {
+                InsertMeasurement(connection, transaction, runId, measurement);
+            }
+
+            transaction.Commit();
+            return runId;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
     private static long FindOrInsertEnvironment(SqliteConnection connection, SqliteTransaction? transaction, EnvironmentInfo environment)
     {
         const string select = "SELECT id FROM environments WHERE os = $os AND os_version = $osVersion AND runtime = $runtime AND cores = $cores AND ram_mb = $ramMb;";
@@ -59,6 +84,34 @@ public sealed class RunRepository
         Add(create, "$name", name);
         create.ExecuteNonQuery();
         return LastInsertId(connection, transaction);
+    }
+
+    private static long InsertRun(SqliteConnection connection, SqliteTransaction transaction, long scenarioId, long environmentId, RunResult run)
+    {
+        const string sql = "INSERT INTO runs (scenario_id, environment_id, started_at, command, repeats, timeout_seconds) VALUES ($scenarioId, $environmentId, $startedAt, $command, $repeats, $timeoutSeconds);";
+        using var command = CreateCommand(connection, transaction, sql);
+        Add(command, "$scenarioId", scenarioId);
+        Add(command, "$environmentId", environmentId);
+        Add(command, "$startedAt", run.StartedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+        Add(command, "$command", run.Scenario.Command);
+        Add(command, "$repeats", run.Scenario.Repeats);
+        Add(command, "$timeoutSeconds", run.Scenario.TimeoutSeconds);
+        command.ExecuteNonQuery();
+        return LastInsertId(connection, transaction);
+    }
+
+    private static void InsertMeasurement(SqliteConnection connection, SqliteTransaction transaction, long runId, Measurement measurement)
+    {
+        const string sql = "INSERT INTO measurements (run_id, iteration, duration_ms, peak_mem_mb, cpu_time_ms, exit_code, status) VALUES ($runId, $iteration, $durationMs, $peakMemMb, $cpuTimeMs, $exitCode, $status);";
+        using var command = CreateCommand(connection, transaction, sql);
+        Add(command, "$runId", runId);
+        Add(command, "$iteration", measurement.Iteration);
+        Add(command, "$durationMs", measurement.DurationMs);
+        Add(command, "$peakMemMb", measurement.PeakMemMb);
+        Add(command, "$cpuTimeMs", measurement.CpuTimeMs);
+        Add(command, "$exitCode", measurement.ExitCode);
+        Add(command, "$status", measurement.Status.ToString());
+        command.ExecuteNonQuery();
     }
 
     private static void AddEnvironmentParameters(SqliteCommand command, EnvironmentInfo environment)
