@@ -14,7 +14,7 @@ public sealed class MetricsSampler
         provider.Refresh();
 
         var peak = provider.ReadPeakWorkingSet();
-        if (peak is long value && (_peakBytes is null || value > _peakBytes))
+        if (peak is long value && value > 0 && (_peakBytes is null || value > _peakBytes))
         {
             _peakBytes = value;
         }

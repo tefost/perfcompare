@@ -74,6 +74,18 @@ public class MetricsSamplerTests
     }
 
     [Fact]
+    public void Sample_ZeroPeak_IsTreatedAsUnavailable()
+    {
+        var provider = new FakeProvider((0L, TimeSpan.FromMilliseconds(10)));
+        var sampler = new MetricsSampler();
+
+        sampler.Sample(provider);
+
+        Assert.Null(sampler.PeakMemMb);
+        Assert.Equal(10.0, sampler.CpuTimeMs);
+    }
+
+    [Fact]
     public void ProcessMetricsProvider_ProcessNotStarted_ReturnsNull()
     {
         using var process = new Process();
