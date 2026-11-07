@@ -12,3 +12,7 @@ coverage/
 publish/
 artifacts/
 .DS_Store
+
+# SQLite
+*.db
+*.db-journal
