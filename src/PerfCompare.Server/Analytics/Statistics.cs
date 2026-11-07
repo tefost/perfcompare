@@ -45,7 +45,7 @@ public static class Statistics
     public static double CoefficientOfVariationPercent(IReadOnlyList<double> values)
     {
         var mean = Mean(values);
-        return mean == 0 ? 0 : StandardDeviation(values) / mean * 100.0;
+        return Math.Abs(mean) < double.Epsilon ? 0 : StandardDeviation(values) / mean * 100.0;
     }
 
     private static void EnsureNotEmpty(IReadOnlyList<double> values)
