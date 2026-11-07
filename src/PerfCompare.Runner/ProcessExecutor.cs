@@ -7,10 +7,17 @@ namespace PerfCompare.Runner;
 public sealed class ProcessExecutor
 {
     private readonly TimeSpan _killGrace;
+    private readonly TimeSpan _sampleInterval;
+    private readonly Func<Process, IMetricsProvider> _providerFactory;
 
-    public ProcessExecutor(TimeSpan? killGrace = null)
+    public ProcessExecutor(
+        TimeSpan? killGrace = null,
+        TimeSpan? sampleInterval = null,
+        Func<Process, IMetricsProvider>? providerFactory = null)
     {
         _killGrace = killGrace ?? TimeSpan.FromSeconds(5);
+        _sampleInterval = sampleInterval ?? TimeSpan.FromMilliseconds(20);
+        _providerFactory = providerFactory ?? (static process => new ProcessMetricsProvider(process));
     }
 
     public ProcessResult RunOnce(Scenario scenario)
@@ -32,18 +39,46 @@ public sealed class ProcessExecutor
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        if (!process.WaitForExit(TimeSpan.FromSeconds(scenario.TimeoutSeconds)))
+        var sampler = new MetricsSampler();
+        var provider = _providerFactory(process);
+        var limit = TimeSpan.FromSeconds(scenario.TimeoutSeconds);
+
+        if (!WaitWithSampling(process, provider, sampler, timer, limit))
         {
             KillTree(process);
             timer.Stop();
-            return new ProcessResult(timer.Elapsed.TotalMilliseconds, null, MeasurementStatus.Timeout);
+            return new ProcessResult(
+                timer.Elapsed.TotalMilliseconds, null, MeasurementStatus.Timeout, null, sampler.PeakMemMb, sampler.CpuTimeMs);
         }
 
         process.WaitForExit();
         timer.Stop();
+        sampler.Sample(provider);
 
         var status = process.ExitCode == 0 ? MeasurementStatus.Passed : MeasurementStatus.Failed;
-        return new ProcessResult(timer.Elapsed.TotalMilliseconds, process.ExitCode, status);
+        return new ProcessResult(
+            timer.Elapsed.TotalMilliseconds, process.ExitCode, status, null, sampler.PeakMemMb, sampler.CpuTimeMs);
+    }
+
+    private bool WaitWithSampling(
+        Process process, IMetricsProvider provider, MetricsSampler sampler, Stopwatch timer, TimeSpan limit)
+    {
+        while (true)
+        {
+            sampler.Sample(provider);
+
+            var remaining = limit - timer.Elapsed;
+            if (remaining <= TimeSpan.Zero)
+            {
+                return false;
+            }
+
+            var step = remaining < _sampleInterval ? remaining : _sampleInterval;
+            if (process.WaitForExit(step))
+            {
+                return true;
+            }
+        }
     }
 
     private void KillTree(Process process)

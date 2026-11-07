@@ -6,4 +6,6 @@ public sealed record ProcessResult(
     double DurationMs,
     int? ExitCode,
     MeasurementStatus Status,
-    string? Error = null);
+    string? Error = null,
+    double? PeakMemMb = null,
+    double? CpuTimeMs = null);
