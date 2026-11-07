@@ -1,3 +1,4 @@
+using PerfCompare.Server.Analytics;
 using PerfCompare.Server.Api;
 using PerfCompare.Server.Database;
 
@@ -9,6 +10,8 @@ builder.Services.AddSingleton(provider =>
     return new SqliteConnectionFactory($"Data Source={path};Pooling=False");
 });
 builder.Services.AddSingleton<RunRepository>();
+builder.Services.AddSingleton<BaselineRepository>();
+builder.Services.AddSingleton<ComparisonService>();
 
 var app = builder.Build();
 
@@ -16,6 +19,7 @@ DatabaseInitializer.Initialize(app.Services.GetRequiredService<SqliteConnectionF
 
 app.MapRunsEndpoints();
 app.MapStatsEndpoints();
+app.MapComparisonEndpoints();
 
 await app.RunAsync();
 
