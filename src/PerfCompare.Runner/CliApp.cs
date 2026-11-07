@@ -8,6 +8,7 @@ public static class CliApp
     public const int ExitOk = 0;
     public const int ExitSendFailed = 1;
     public const int ExitUsage = 2;
+    public const int ExitInterrupted = 130;
 
     public static async Task<int> RunAsync(
         string[] args,
@@ -34,7 +35,19 @@ public static class CliApp
             return ExitUsage;
         }
 
-        var run = SeriesRunner.Run(scenario, new ProcessExecutor(), EnvironmentFingerprint.Capture(), output);
+        var run = SeriesRunner.Run(scenario, new ProcessExecutor(), EnvironmentFingerprint.Capture(), output, cancellation);
+        if (run.Measurements.Count == 0)
+        {
+            await error.WriteLineAsync("Серію перервано до першого вимірювання, результату немає");
+            return ExitInterrupted;
+        }
+
+        var interrupted = cancellation.IsCancellationRequested;
+        if (interrupted)
+        {
+            await output.WriteLineAsync(
+                $"Серію перервано: виконано {run.Measurements.Count} з {scenario.Repeats} вимірювань");
+        }
 
         if (options.OutPath is not null)
         {
@@ -47,7 +60,7 @@ public static class CliApp
             try
             {
                 using var client = new ResultClient(options.ServerUrl, handler);
-                var runId = await client.SendAsync(run, cancellation);
+                var runId = await client.SendAsync(run);
                 await output.WriteLineAsync($"Відправлено на сервер, runId={runId}");
             }
             catch (ResultClientException ex)
@@ -62,6 +75,6 @@ public static class CliApp
             await output.WriteLineAsync(JsonSerializer.Serialize(run, ContractJson.Options));
         }
 
-        return ExitOk;
+        return interrupted ? ExitInterrupted : ExitOk;
     }
 }
