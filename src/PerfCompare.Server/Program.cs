@@ -15,6 +15,7 @@ var app = builder.Build();
 DatabaseInitializer.Initialize(app.Services.GetRequiredService<SqliteConnectionFactory>());
 
 app.MapRunsEndpoints();
+app.MapStatsEndpoints();
 
 await app.RunAsync();
 
