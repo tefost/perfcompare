@@ -1,0 +1,6 @@
+name: baseline
+command: dotnet
+args: ["--version"]
+repeats: 5
+timeoutSeconds: 30
+warmup: 1
