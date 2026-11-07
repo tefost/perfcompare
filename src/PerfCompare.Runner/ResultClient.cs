@@ -6,11 +6,12 @@ namespace PerfCompare.Runner;
 public sealed class ResultClient : IDisposable
 {
     private readonly HttpClient _http;
+    private readonly Uri _endpoint;
 
     public ResultClient(string serverUrl, HttpMessageHandler? handler = null)
     {
         _http = handler is null ? new HttpClient() : new HttpClient(handler, disposeHandler: false);
-        _http.BaseAddress = new Uri(serverUrl.TrimEnd('/') + '/');
+        _endpoint = new Uri(new Uri(serverUrl), "api/runs");
         _http.Timeout = TimeSpan.FromSeconds(30);
     }
 
@@ -18,7 +19,7 @@ public sealed class ResultClient : IDisposable
     {
         try
         {
-            using var response = await _http.PostAsJsonAsync("api/runs", run, ContractJson.Options, cancellation);
+            using var response = await _http.PostAsJsonAsync(_endpoint, run, ContractJson.Options, cancellation);
             return await ReadRunIdAsync(response, cancellation);
         }
         catch (HttpRequestException ex)
