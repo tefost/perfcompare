@@ -1,6 +1,6 @@
 name: baseline
-command: dotnet
-args: ["--version"]
+command: samples/bin/CpuBound
+args: ["2000000"]
 repeats: 5
-timeoutSeconds: 30
+timeoutSeconds: 60
 warmup: 1
