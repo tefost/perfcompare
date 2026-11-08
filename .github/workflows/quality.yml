@@ -7,9 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  coverage-server:
-    name: coverage (Server, поріг 80%)
+  coverage:
+    name: coverage (${{ matrix.project }}, поріг 80%)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [Server, Runner]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,16 +25,16 @@ jobs:
 
       - name: Coverage
         shell: pwsh
-        run: ./scripts/coverage.ps1 -Name Server
+        run: ./scripts/coverage.ps1 -Name ${{ matrix.project }}
 
       - name: Upload report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-server-report
+          name: coverage-${{ matrix.project }}-report
           path: |
-            docs/reports/coverage-server.md
-            coverage/server-report/**
+            docs/reports/coverage-*.md
+            coverage/*-report/**
 
   analyzers:
     name: analyzers (SonarAnalyzer)
