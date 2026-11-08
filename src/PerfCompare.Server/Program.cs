@@ -11,6 +11,7 @@ builder.Services.AddSingleton(provider =>
 });
 builder.Services.AddSingleton<RunRepository>();
 builder.Services.AddSingleton<BaselineRepository>();
+builder.Services.AddSingleton<ScenarioRepository>();
 builder.Services.AddSingleton<RunKeyReader>();
 builder.Services.AddSingleton<ComparisonService>();
 builder.Services.AddSingleton<RegressionService>();
@@ -23,6 +24,9 @@ app.MapRunsEndpoints();
 app.MapStatsEndpoints();
 app.MapComparisonEndpoints();
 app.MapRegressionEndpoints();
+app.MapScenariosEndpoints();
+app.MapExportEndpoints();
+app.MapDashboardEndpoints();
 
 await app.RunAsync();
 

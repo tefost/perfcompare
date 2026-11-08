@@ -17,5 +17,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Database\schema.sql" LogicalName="schema.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Dashboard\**\*" />
+  </ItemGroup>
 </Project>
+
 
