@@ -17,7 +17,17 @@ public static class ScenarioLoader
             throw new ScenarioException($"Файл сценарію не знайдено: {path}");
         }
 
-        return Parse(File.ReadAllText(path));
+        string text;
+        try
+        {
+            text = File.ReadAllText(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new ScenarioException($"Не вдалося прочитати файл сценарію: {ex.Message}", ex);
+        }
+
+        return Parse(text);
     }
 
     public static Scenario Parse(string yaml)
@@ -37,6 +47,7 @@ public static class ScenarioLoader
             throw new ScenarioException("Сценарій порожній");
         }
 
+        scenario.Args ??= new List<string>();
         ScenarioValidator.Validate(scenario);
         return scenario;
     }

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using PerfCompare.Contracts;
 
 namespace PerfCompare.Runner;
@@ -25,6 +26,10 @@ public sealed class ResultClient : IDisposable
         catch (HttpRequestException ex)
         {
             throw new ResultClientException($"сервер недоступний: {ex.Message}", ex);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            throw new ResultClientException($"сервер повернув некоректну відповідь: {ex.Message}", ex);
         }
         catch (TaskCanceledException ex) when (!cancellation.IsCancellationRequested)
         {
