@@ -14,6 +14,7 @@ const elements = {
   scenario: document.getElementById("scenario"),
   threshold: document.getElementById("threshold"),
   exportLink: document.getElementById("export"),
+  reportLink: document.getElementById("report"),
   message: document.getElementById("message"),
   compareBody: document.querySelector("#compare-table tbody"),
   runsBody: document.querySelector("#runs-table tbody"),
@@ -205,6 +206,7 @@ async function render() {
 
   const version = ++renderVersion;
   elements.exportLink.href = `api/export.csv?scenarioId=${scenarioId}`;
+  elements.reportLink.href = `api/report.html?scenarioId=${scenarioId}&threshold=${Number(elements.threshold.value) || 10}`;
   setMessage("");
 
   try {
