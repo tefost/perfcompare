@@ -20,6 +20,8 @@ var app = builder.Build();
 
 DatabaseInitializer.Initialize(app.Services.GetRequiredService<SqliteConnectionFactory>());
 
+app.UseJsonErrors();
+
 app.MapRunsEndpoints();
 app.MapStatsEndpoints();
 app.MapComparisonEndpoints();
