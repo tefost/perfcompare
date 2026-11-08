@@ -1,0 +1,6 @@
+name: sort
+command: samples/bin/SortFile
+args: ["1000000"]
+repeats: 5
+timeoutSeconds: 60
+warmup: 1

@@ -1,0 +1,7 @@
+# Той самий сценарій baseline, але важче навантаження: після запуску baseline дає регресію
+name: baseline
+command: samples/bin/CpuBound
+args: ["5000000"]
+repeats: 5
+timeoutSeconds: 120
+warmup: 1

@@ -1,0 +1,6 @@
+name: timeout
+command: samples/bin/CpuBound
+args: ["2000000000"]
+repeats: 2
+timeoutSeconds: 2
+warmup: 0

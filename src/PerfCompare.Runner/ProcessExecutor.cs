@@ -96,7 +96,7 @@ public sealed class ProcessExecutor
 
     private static ProcessStartInfo BuildStartInfo(Scenario scenario)
     {
-        var info = new ProcessStartInfo(scenario.Command)
+        var info = new ProcessStartInfo(CommandResolver.Resolve(scenario.Command))
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,

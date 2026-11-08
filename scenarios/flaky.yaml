@@ -1,0 +1,6 @@
+name: flaky
+command: samples/bin/Flaky
+args: ["30"]
+repeats: 10
+timeoutSeconds: 30
+warmup: 0
