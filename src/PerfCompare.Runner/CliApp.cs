@@ -8,6 +8,7 @@ public static class CliApp
     public const int ExitOk = 0;
     public const int ExitSendFailed = 1;
     public const int ExitUsage = 2;
+    public const int ExitInternal = 3;
     public const int ExitInterrupted = 130;
 
     private const int SendAttempts = 3;
@@ -30,9 +31,18 @@ public static class CliApp
         }
 
         var delay = retryDelay ?? DefaultRetryDelay;
-        return options.Command == CliOptions.SendCommand
-            ? await SendSavedAsync(options, output, error, handler, delay)
-            : await RunSeriesAsync(options, output, error, handler, cancellation, delay);
+        try
+        {
+            return options.Command == CliOptions.SendCommand
+                ? await SendSavedAsync(options, output, error, handler, delay)
+                : await RunSeriesAsync(options, output, error, handler, cancellation, delay);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
+            or NotSupportedException or InvalidOperationException)
+        {
+            await error.WriteLineAsync($"Помилка виконання: {ex.Message}");
+            return ExitInternal;
+        }
     }
 
     private static async Task<int> RunSeriesAsync(

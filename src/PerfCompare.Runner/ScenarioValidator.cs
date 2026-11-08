@@ -34,6 +34,11 @@ public static class ScenarioValidator
             errors.Add($"timeoutSeconds: від 1 до {MaxTimeoutSeconds}, зараз {scenario.TimeoutSeconds}");
         }
 
+        if (scenario.Args.Exists(static argument => argument is null))
+        {
+            errors.Add("args: елементи не можуть бути порожніми");
+        }
+
         if (scenario.Warmup < 0)
         {
             errors.Add($"warmup: не менше 0, зараз {scenario.Warmup}");
