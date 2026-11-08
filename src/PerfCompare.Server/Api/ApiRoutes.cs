@@ -11,6 +11,8 @@ public static class ApiRoutes
     public const string Baselines = "/api/baselines";
     public const string Compare = "/api/compare";
     public const string Regressions = "/api/regressions";
+    public const string Scenarios = "/api/scenarios";
+    public const string ExportCsv = "/api/export.csv";
 
     public static string RunLocation(long id)
     {
@@ -32,5 +34,10 @@ public static class ApiRoutes
     {
         var url = Regressions + "?runId=" + runId.ToString(CultureInfo.InvariantCulture);
         return threshold is null ? url : url + "&threshold=" + threshold;
+    }
+
+    public static string ExportUrl(long scenarioId)
+    {
+        return ExportCsv + "?scenarioId=" + scenarioId.ToString(CultureInfo.InvariantCulture);
     }
 }
