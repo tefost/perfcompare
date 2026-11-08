@@ -28,6 +28,7 @@ app.MapComparisonEndpoints();
 app.MapRegressionEndpoints();
 app.MapScenariosEndpoints();
 app.MapExportEndpoints();
+app.MapReportEndpoints();
 app.MapDashboardEndpoints();
 
 await app.RunAsync();

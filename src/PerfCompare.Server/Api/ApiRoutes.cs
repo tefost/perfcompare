@@ -13,6 +13,7 @@ public static class ApiRoutes
     public const string Regressions = "/api/regressions";
     public const string Scenarios = "/api/scenarios";
     public const string ExportCsv = "/api/export.csv";
+    public const string ReportHtml = "/api/report.html";
 
     public static string RunLocation(long id)
     {
@@ -39,5 +40,11 @@ public static class ApiRoutes
     public static string ExportUrl(long scenarioId)
     {
         return ExportCsv + "?scenarioId=" + scenarioId.ToString(CultureInfo.InvariantCulture);
+    }
+
+    public static string ReportUrl(long scenarioId, string? threshold = null)
+    {
+        var url = ReportHtml + "?scenarioId=" + scenarioId.ToString(CultureInfo.InvariantCulture);
+        return threshold is null ? url : url + "&threshold=" + threshold;
     }
 }
