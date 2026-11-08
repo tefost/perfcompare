@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PerfCompare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>PerfCompare</h1>
+    <div class="controls">
+      <label>Сценарій
+        <select id="scenario"></select>
+      </label>
+      <label>Поріг регресії, %
+        <input id="threshold" type="number" min="1" max="1000" step="1" value="10">
+      </label>
+      <a id="export" class="button" href="#">Експорт CSV</a>
+    </div>
+  </header>
+
+  <main>
+    <p id="message" class="message" hidden></p>
+
+    <section>
+      <h2>Порівняння середовищ</h2>
+      <div class="chart"><canvas id="compare-chart"></canvas></div>
+      <div class="table-wrap">
+        <table id="compare-table">
+          <thead>
+            <tr>
+              <th>Середовище</th>
+              <th>Останній запуск</th>
+              <th>Медіана, мс</th>
+              <th>P95, мс</th>
+              <th>Стабільність</th>
+              <th>Успішність</th>
+              <th>Повільніше за найшвидше</th>
+              <th>Базовий запуск</th>
+              <th>Регресія</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Динаміка медіани за запусками</h2>
+      <div class="chart"><canvas id="trend-chart"></canvas></div>
+    </section>
+
+    <section>
+      <h2>Запуски</h2>
+      <div class="table-wrap">
+        <table id="runs-table">
+          <thead>
+            <tr>
+              <th>Запуск</th>
+              <th>Середовище</th>
+              <th>Час початку</th>
+              <th>Вимірювань</th>
+              <th>Базова лінія</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="chart.umd.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
