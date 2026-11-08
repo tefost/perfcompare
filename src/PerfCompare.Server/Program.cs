@@ -11,7 +11,9 @@ builder.Services.AddSingleton(provider =>
 });
 builder.Services.AddSingleton<RunRepository>();
 builder.Services.AddSingleton<BaselineRepository>();
+builder.Services.AddSingleton<RunKeyReader>();
 builder.Services.AddSingleton<ComparisonService>();
+builder.Services.AddSingleton<RegressionService>();
 
 var app = builder.Build();
 
@@ -20,6 +22,7 @@ DatabaseInitializer.Initialize(app.Services.GetRequiredService<SqliteConnectionF
 app.MapRunsEndpoints();
 app.MapStatsEndpoints();
 app.MapComparisonEndpoints();
+app.MapRegressionEndpoints();
 
 await app.RunAsync();
 
