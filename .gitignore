@@ -16,3 +16,5 @@ artifacts/
 # SQLite
 *.db
 *.db-journal
+
+results/
