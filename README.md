@@ -144,3 +144,48 @@ dotnet run --project src/PerfCompare.Runner -- run scenarios/slow.yaml --server 
 - `docs/contract.md`: контракт між runner і server
 - `docs/decisions.md`: журнал рішень
 
+
+## Перевірка з нуля
+
+Так проект запускається на чистій машині з .NET 9 SDK (Windows, Linux чи macOS):
+
+```bash
+git clone https://github.com/tefost/perfcompare.git
+cd perfcompare
+dotnet build
+dotnet test
+dotnet publish samples/CpuBound -c Release -o samples/bin
+```
+
+Сервер в одному терміналі:
+
+```bash
+dotnet run --project src/PerfCompare.Server --urls http://localhost:5000
+```
+
+Runner в іншому терміналі:
+
+```bash
+dotnet run --project src/PerfCompare.Runner -- run scenarios/baseline.yaml --server http://localhost:5000
+```
+
+Очікується: runner показує `[1/5] Passed ...` для кожного повтору й рядок `Відправлено на сервер, runId=1`, а на `http://localhost:5000/` з'являється сценарій `baseline` із графіками. Для демонстрації регресії виконайте `scenarios/slow.yaml`, позначте перший запуск базовим на дашборді й відкрийте звіт кнопкою «HTML-звіт».
+
+## Тестування і якість
+
+| Що | Де |
+|---|---|
+| список тест-кейсів і зв'язок з автотестами | [docs/test-cases.md](docs/test-cases.md) |
+| результат останнього повного запуску тестів за класами | [docs/reports/test-results.md](docs/reports/test-results.md) |
+| покриття тестами server і runner (не менше 80%) | [docs/reports/coverage-server.md](docs/reports/coverage-server.md), [docs/reports/coverage-runner.md](docs/reports/coverage-runner.md) |
+| звіт статичного аналізу | [docs/reports/analyzer-report.md](docs/reports/analyzer-report.md) |
+| крайні випадки server і runner | [docs/edge-cases-server.md](docs/edge-cases-server.md), [docs/edge-cases-runner.md](docs/edge-cases-runner.md) |
+| архітектура і схема бази | [docs/architecture.md](docs/architecture.md) |
+
+Звіти створюються скриптами з папки `scripts` (опис у [docs/reports/README.md](docs/reports/README.md)); у CI їх запускає перевірка `Quality`.
+
+## Документація компонентів
+
+- [src/PerfCompare.Runner/README.md](src/PerfCompare.Runner/README.md): команди, формат сценарію, коди виходу
+- [src/PerfCompare.Server/README.md](src/PerfCompare.Server/README.md): запуск, налаштування, ендпоінти
+

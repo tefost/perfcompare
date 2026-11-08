@@ -1,4 +1,4 @@
-# Звіти якості
+﻿# Звіти якості
 
 Файли в цій папці створюють скрипти з `scripts/`, руками їх не редагують. Після зміни коду звіти оновлюють повторним запуском скрипта.
 
@@ -7,6 +7,7 @@
 | `coverage-server.md` | покриття рядків і гілок сервера, таблиця за класами | `./scripts/coverage.ps1 -Name Server` |
 | `coverage-runner.md` | те саме для runner | `./scripts/coverage.ps1 -Name Runner` |
 | `analyzer-report.md` | попередження SonarAnalyzer на 1000 рядків коду та їх перелік | `./scripts/analyzer-report.ps1` |
+| `test-results.md` | кількість тестів і результат за класами для всього рішення | `./scripts/test-report.ps1` |
 
 ## Засоби
 
