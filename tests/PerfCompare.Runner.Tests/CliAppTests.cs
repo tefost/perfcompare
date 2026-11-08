@@ -36,7 +36,7 @@ public class CliAppTests
     {
         var output = new StringWriter();
         var error = new StringWriter();
-        var code = await CliApp.RunAsync(args, output, error, handler);
+        var code = await CliApp.RunAsync(args, output, error, handler, default, TimeSpan.Zero);
         return (code, output.ToString(), error.ToString());
     }
 
@@ -153,8 +153,10 @@ public class CliAppTests
         {
             var scenario = WriteScenario(dir, "0");
             var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+            var saved = Path.Combine(dir, "saved");
 
-            var result = await Run(new[] { "run", scenario, "--server", "http://localhost:5000" }, handler);
+            var result = await Run(
+                new[] { "run", scenario, "--server", "http://localhost:5000", "--results-dir", saved }, handler);
 
             Assert.Equal(CliApp.ExitSendFailed, result.Code);
             Assert.Contains("Не вдалося відправити", result.Err);
