@@ -38,3 +38,64 @@ jobs:
         with:
           name: coverage-${{ matrix.os }}
           path: coverage/**/coverage.cobertura.xml
+
+  e2e:
+    name: e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Publish samples
+        run: |
+          dotnet publish samples/CpuBound --configuration Release --output samples/bin
+          dotnet publish samples/SortFile --configuration Release --output samples/bin
+          dotnet publish samples/Flaky --configuration Release --output samples/bin
+
+      - name: Start server
+        run: |
+          export Database__Path=e2e.db
+          dotnet src/PerfCompare.Server/bin/Release/net9.0/PerfCompare.Server.dll --urls http://localhost:5000 > server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:5000/api/runs > /dev/null; then
+              echo "server is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat server.log
+          exit 1
+
+      - name: Run scenario and send result
+        run: dotnet src/PerfCompare.Runner/bin/Release/net9.0/PerfCompare.Runner.dll run scenarios/baseline.yaml --server http://localhost:5000 --out e2e-result.json
+
+      - name: Check server data
+        run: |
+          curl -fsS http://localhost:5000/api/runs/1/stats | tee e2e-stats.json
+          grep -q '"passed":5' e2e-stats.json
+          head -c 600 e2e-result.json
+
+      - name: Upload e2e results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-${{ matrix.os }}
+          path: |
+            e2e-result.json
+            e2e-stats.json
+            server.log
