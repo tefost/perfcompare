@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Запускає тести проєкту з вимірюванням покриття і будує звіт у docs/reports.
 
@@ -53,8 +53,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "ReportGenerator завершився з помилкою."
 }
 
-$summary = Get-Content (Join-Path $html "Summary.txt") -Raw
-$markdown = Get-Content (Join-Path $html "SummaryGithub.md") -Raw
+$summary = Get-Content (Join-Path $html "Summary.txt") -Raw -Encoding utf8
+$markdown = Get-Content (Join-Path $html "SummaryGithub.md") -Raw -Encoding utf8
 
 function Read-Percent([string]$label) {
     $match = [regex]::Match($summary, "$label coverage:\s*([\d]+[.,]?[\d]*)%")

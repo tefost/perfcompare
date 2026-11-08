@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Збирає рішення з аналізаторами SonarAnalyzer і будує звіт про попередження в docs/reports/analyzer-report.md.
 
