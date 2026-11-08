@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: package (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            archive: zip
+          - os: ubuntu-latest
+            rid: linux-x64
+            archive: tar.gz
+          - os: macos-latest
+            rid: osx-arm64
+            archive: tar.gz
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: Publish
+        run: |
+          flags="--configuration Release --runtime ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true -p:InvariantGlobalization=true"
+          dotnet publish src/PerfCompare.Server $flags -p:IncludeNativeLibrariesForSelfExtract=true --output dist
+          dotnet publish src/PerfCompare.Runner $flags --output dist
+          for sample in CpuBound SortFile Flaky; do
+            dotnet publish samples/$sample $flags --output dist/samples/bin
+          done
+          cp -r scenarios dist/scenarios
+          rm -f dist/*.pdb dist/samples/bin/*.pdb
+
+      - name: Smoke test
+        run: |
+          cp -r dist smoke
+          cd smoke
+          ./PerfCompare.Server --urls http://localhost:5000 > server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:5000/api/runs > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          ./PerfCompare.Runner run scenarios/baseline.yaml --server http://localhost:5000
+          curl -fsS http://localhost:5000/api/runs/1/stats | grep -q '"passed":5'
+
+      - name: Archive
+        run: |
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            (cd dist && 7z a -tzip ../perfcompare-${{ matrix.rid }}.zip .)
+          else
+            tar -czf perfcompare-${{ matrix.rid }}.tar.gz -C dist .
+          fi
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-${{ matrix.rid }}
+          path: perfcompare-${{ matrix.rid }}.*
+
+  publish:
+    name: publish release
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: archive-*
+          merge-multiple: true
+          path: archives
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=""
+          if [[ "$TAG" == v0.* ]]; then
+            prerelease="--prerelease"
+          fi
+          gh release create "$TAG" archives/* --repo "$GITHUB_REPOSITORY" --title "PerfCompare $TAG" --generate-notes $prerelease
