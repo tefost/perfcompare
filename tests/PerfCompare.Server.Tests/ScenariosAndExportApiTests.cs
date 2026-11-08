@@ -27,9 +27,10 @@ public class ScenariosAndExportApiTests
         await RunsApiTests.PostOk(client, RunRepositoryTests.Sample("alpha"));
         await RunsApiTests.PostOk(client, RunRepositoryTests.Sample("beta"));
 
-        var items = await client.GetFromJsonAsync<List<ScenarioItem>>(ApiRoutes.Scenarios, ContractJson.Options);
+        var items = await client.GetFromJsonAsync<List<ScenarioItem>>(ApiRoutes.Scenarios, ContractJson.Options)
+            ?? new List<ScenarioItem>();
 
-        Assert.Equal(new[] { "alpha", "beta" }, items!.Select(item => item.Name));
+        Assert.Equal(new[] { "alpha", "beta" }, items.Select(item => item.Name));
         Assert.Equal(new long[] { 1, 2 }, items.Select(item => item.Id));
     }
 
