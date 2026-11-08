@@ -66,6 +66,8 @@ jobs:
           done
           ./PerfCompare.Runner run scenarios/baseline.yaml --server http://localhost:5000
           curl -fsS http://localhost:5000/api/runs/1/stats | grep -q '"passed":5'
+          curl -fsS http://localhost:5000/ | grep -q "PerfCompare"
+          curl -fsS "http://localhost:5000/api/report.html?scenarioId=1" | grep -q "<table>"
 
       - name: Archive
         run: |
