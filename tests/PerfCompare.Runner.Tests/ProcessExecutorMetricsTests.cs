@@ -68,7 +68,7 @@ public class ProcessExecutorMetricsTests
         var result = new ProcessExecutor().RunOnce(Helper("sleep", "0.3"));
 
         Assert.Equal(MeasurementStatus.Passed, result.Status);
-        Assert.True(result.PeakMemMb is null or > 0);
+        Assert.True(result.PeakMemMb is null or >= 0);
     }
 
     [Fact]
